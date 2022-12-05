@@ -38,25 +38,25 @@ private fun readInput(): Instructions {
 }
 
 private fun moveSingleCrate(stacks: List<List<Char>>, instruction: MoveInstruction): List<List<Char>> =
-    stacks.mapIndexed { index, stack ->
-        when (index) {
-            instruction.from -> stack.dropLast(1)
-            instruction.to -> stack + stacks[instruction.from].last()
-            else -> stack
-        }
-    }
+    stacks.mapIndexed { index, stack -> processStack(index, instruction, stack, stacks, 1) }
 
 private fun moveCrates9001(stacks: List<List<Char>>, instruction: MoveInstruction): List<List<Char>> =
-    stacks.mapIndexed { index, stack ->
-        when (index) {
-            instruction.from -> stack.dropLast(instruction.count)
-            instruction.to -> stack + stacks[instruction.from].takeLast(instruction.count)
-            else -> stack
-        }
-    }
+    stacks.mapIndexed { index, stack -> processStack(index, instruction, stack, stacks, instruction.count) }
 
 private fun moveCrates9000(stacks: List<List<Char>>, instruction: MoveInstruction): List<List<Char>> =
     (1..instruction.count).map { instruction }.fold(stacks, ::moveSingleCrate)
+
+private fun processStack(
+    index: Int,
+    instruction: MoveInstruction,
+    currentStack: List<Char>,
+    stacks: List<List<Char>>,
+    cratesToMove: Int
+) = when (index) {
+    instruction.from -> currentStack.dropLast(cratesToMove)
+    instruction.to -> currentStack + stacks[instruction.from].takeLast(cratesToMove)
+    else -> currentStack
+}
 
 private fun List<List<Char>>.topCrates() = map { it.last() }.joinToString("")
 
