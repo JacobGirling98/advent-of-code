@@ -30,63 +30,63 @@ data class Knot(
     val coordinate: Coordinate,
     val history: Set<Coordinate>
 ) {
-    fun move(instruction: Instruction): Knot = when (instruction.direction) {
+    fun move(direction: Direction): Knot = when (direction) {
         RIGHT -> copy(coordinate = coordinate.let { it.copy(x = it.x + 1) })
         LEFT -> copy(coordinate = coordinate.let { it.copy(x = it.x - 1) })
         UP -> copy(coordinate = coordinate.let { it.copy(y = it.y + 1) })
         DOWN -> copy(coordinate = coordinate.let { it.copy(y = it.y - 1) })
     }
 
-    fun moveRelativeTo(knot: Knot): Knot = when {
-        isNextTo(knot.coordinate) -> copy()
+    fun moveRelativeTo(coordinate: Coordinate): Knot = when {
+        isNextTo(coordinate) -> copy()
 
-        isSeparatedHorizontally(knot.coordinate) -> moveHorizontallyTowards(knot.coordinate.x).withUpdatedHistory()
+        isSeparatedHorizontally(coordinate) -> moveHorizontallyTowards(coordinate.x).withUpdatedHistory()
 
-        isSeparatedVertically(knot.coordinate) -> moveVerticallyTowards(knot.coordinate.y).withUpdatedHistory()
+        isSeparatedVertically(coordinate) -> moveVerticallyTowards(coordinate.y).withUpdatedHistory()
 
-        isSeparatedDiagonally(knot.coordinate) -> moveDiagonallyTowards(knot.coordinate).withUpdatedHistory()
+        isSeparatedDiagonally(coordinate) -> moveDiagonallyTowards(coordinate).withUpdatedHistory()
 
-        isSeparatedDiagonallySkewedX(knot.coordinate) -> moveDiagonallySkewedXTowards(knot.coordinate).withUpdatedHistory()
+        isSeparatedDiagonallySkewedX(coordinate) -> moveDiagonallySkewedXTowards(coordinate).withUpdatedHistory()
 
-        isSeparatedDiagonallySkewedY(knot.coordinate) -> moveDiagonallySkewedYTowards(knot.coordinate).withUpdatedHistory()
+        isSeparatedDiagonallySkewedY(coordinate) -> moveDiagonallySkewedYTowards(coordinate).withUpdatedHistory()
 
         else -> error("oh dear")
     }
 
     private fun withUpdatedHistory() = copy(history = history + coordinate)
 
-    private fun moveHorizontallyTowards(xCoordinate: Int) =
-        copy(coordinate = coordinate.copy(x = coordinate.x + (xCoordinate - coordinate.x) / 2))
+    private fun moveHorizontallyTowards(target: Int) =
+        copy(coordinate = coordinate.copy(x = coordinate.x + (target - coordinate.x) / 2))
 
-    private fun moveVerticallyTowards(yCoordinate: Int) =
-        copy(coordinate = coordinate.copy(y = coordinate.y + (yCoordinate - coordinate.y) / 2))
+    private fun moveVerticallyTowards(target: Int) =
+        copy(coordinate = coordinate.copy(y = coordinate.y + (target - coordinate.y) / 2))
 
-    private fun moveDiagonallySkewedYTowards(coordinate: Coordinate): Knot =
-        moveVerticallyTowards(coordinate.y).let { it.copy(coordinate = it.coordinate.copy(x = coordinate.x)) }
+    private fun moveDiagonallySkewedYTowards(target: Coordinate): Knot =
+        moveVerticallyTowards(target.y).let { it.copy(coordinate = it.coordinate.copy(x = target.x)) }
 
-    private fun moveDiagonallySkewedXTowards(coordinate: Coordinate) =
-        moveHorizontallyTowards(coordinate.x).let { it.copy(coordinate = it.coordinate.copy(y = coordinate.y)) }
+    private fun moveDiagonallySkewedXTowards(target: Coordinate) =
+        moveHorizontallyTowards(target.x).let { it.copy(coordinate = it.coordinate.copy(y = target.y)) }
 
-    private fun moveDiagonallyTowards(coordinate: Coordinate) =
-        moveHorizontallyTowards(coordinate.x).moveVerticallyTowards(coordinate.y)
+    private fun moveDiagonallyTowards(target: Coordinate) =
+        moveHorizontallyTowards(target.x).moveVerticallyTowards(target.y)
 
-    private fun isNextTo(coordinate: Coordinate) =
-        abs(this.coordinate.x - coordinate.x) <= 1 && abs(this.coordinate.y - coordinate.y) <= 1
+    private fun isNextTo(target: Coordinate) =
+        abs(coordinate.x - target.x) <= 1 && abs(coordinate.y - target.y) <= 1
 
-    private fun isSeparatedHorizontally(coordinate: Coordinate) =
-        this.coordinate.y == coordinate.y && abs(this.coordinate.x - coordinate.x) > 1
+    private fun isSeparatedHorizontally(target: Coordinate) =
+        coordinate.y == target.y && abs(coordinate.x - target.x) > 1
 
-    private fun isSeparatedVertically(coordinate: Coordinate) =
-        this.coordinate.x == coordinate.x && abs(this.coordinate.y - coordinate.y) > 1
+    private fun isSeparatedVertically(target: Coordinate) =
+        coordinate.x == target.x && abs(coordinate.y - target.y) > 1
 
-    private fun isSeparatedDiagonallySkewedY(coordinate: Coordinate) =
-        abs(this.coordinate.x - coordinate.x) == 1 && abs(this.coordinate.y - coordinate.y) == 2
+    private fun isSeparatedDiagonallySkewedY(target: Coordinate) =
+        abs(coordinate.x - target.x) == 1 && abs(coordinate.y - target.y) == 2
 
-    private fun isSeparatedDiagonallySkewedX(coordinate: Coordinate) =
-        abs(this.coordinate.x - coordinate.x) == 2 && abs(this.coordinate.y - coordinate.y) == 1
+    private fun isSeparatedDiagonallySkewedX(target: Coordinate) =
+        abs(coordinate.x - target.x) == 2 && abs(coordinate.y - target.y) == 1
 
-    private fun isSeparatedDiagonally(coordinate: Coordinate) =
-        abs(this.coordinate.x - coordinate.x) == 2 && abs(this.coordinate.y - coordinate.y) == 2
+    private fun isSeparatedDiagonally(target: Coordinate) =
+        abs(coordinate.x - target.x) == 2 && abs(coordinate.y - target.y) == 2
 }
 
 fun List<Knot>.completeInstruction(instruction: Instruction): List<Knot> =
@@ -94,16 +94,12 @@ fun List<Knot>.completeInstruction(instruction: Instruction): List<Knot> =
         knots.moveKnotsByOne(instr)
     }
 
-fun List<Knot>.moveKnotsByOne(instruction: Instruction): List<Knot> = indices.fold(this) { tails, tailNumber ->
-    tails.mapIndexed { index, tail ->
-        if (index != tailNumber) {
-            tail
-        } else {
-            if (index == 0) {
-                tail.move(instruction)
-            } else {
-                tail.moveRelativeTo(tails[tailNumber - 1])
-            }
+fun List<Knot>.moveKnotsByOne(instruction: Instruction): List<Knot> = indices.fold(this) { knots, knotNumber ->
+    knots.mapIndexed { index, knot ->
+        when {
+            index != knotNumber -> knot
+            index == 0 -> knot.move(instruction.direction)
+            else -> knot.moveRelativeTo(knots[knotNumber - 1].coordinate)
         }
     }
 }
